@@ -1,0 +1,22 @@
+bibentry(
+  bibtype = "Article",
+  header = "To cite the group response-adaptive randomization method in publications use:",
+  title = "Group Response-Adaptive Randomization With Delayed and Missing Responses",
+  author = c(person("Guannan", "Zhai"), person("Yang", "Li"), person("Lixin", "Zhang"), person("Feifang", "Hu")),
+  journal = "Statistics in Medicine",
+  year = "2024",
+  volume = "43",
+  number = "27",
+  pages = "5047--5059",
+  doi = "10.1002/sim.10220"
+)
+
+bibentry(
+  bibtype = "Manual",
+  header = "To cite the grouprar package use:",
+  title = "{grouprar}: Group Response Adaptive Randomization for Clinical Trials",
+  author = c(person("Guannan", "Zhai"), person("Feifang", "Hu")),
+  year = sub("-.*", "", meta$Date),
+  note = paste("R package version", meta$Version),
+  url = "https://CRAN.R-project.org/package=grouprar"
+)

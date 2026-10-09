@@ -1,33 +1,34 @@
-\name{DBCD_Cont}
-\alias{DBCD_Cont}
+\name{DBCD_Bin}
+\alias{DBCD_Bin}
 \title{
-Hu and Zhang's Doubly Biased Coin Design with Continuous Response Type
+Hu and Zhang's Doubly Biased Coin Design with Binary Response Type
 }
 \description{
-Simulating Hu and Zhang's doubly biased coin design with continuous response (number of arms \eqn{\ge 2}) in a clinical trial context. (Inference: two-sided t-test for two arms or chi-square test for more than two arms.)
+Simulating Hu and Zhang's doubly biased coin design with binary response (number of arms \eqn{\ge 2}) in a clinical trial context. (Inference: two-sided t-test for two arms or chi-square test for more than two arms.)
 }
 \usage{
-DBCD_Cont(n0 = 20, theta, k, ssn, theta0 = NULL, target.alloc = "Neyman",
-          r = 2, nsim = 2000, alpha = 0.05, allocation = "DBCD",
-          erade.alpha = 0.5, lower.bound = 0, monitor = NULL, test.fun = NULL,
-          typeI = FALSE, seed = NULL)
+DBCD_Bin(n0 = 20, p, k, ssn, theta0 = NULL, target.alloc = "RPW", r = 2,
+         nsim = 2000, mRate = NULL, alpha = 0.05, allocation = "DBCD",
+         erade.alpha = 0.5, lower.bound = 0, monitor = NULL, test.fun = NULL,
+         typeI = FALSE, seed = NULL)
 }
 \arguments{
   \item{n0}{A positive integer and a multiple of \code{k}. The number of initial patients assigned by restricted randomization for initial parameter estimation.}
-  \item{theta}{A numerical vector of length \code{2k} giving the true mean and variance of each treatment, used to generate data for the simulations. For example, with \code{k = 2} use \code{theta = c(13, 4.0^2, 15, 2.5^2)}.}
+  \item{p}{A vector of length \code{k} with values between 0 and 1. The true success rates of the treatments, used to generate data for the simulations.}
   \item{k}{A positive integer. The number of treatment groups in the trial (\eqn{k \ge 2}).}
   \item{ssn}{A positive integer. The total number of participants in each simulated trial.}
-  \item{theta0}{Currently unused. Kept for backward compatibility.}
-  \item{target.alloc}{Desired allocation proportion. One of \code{"Neyman"}, \code{"ZR"}, \code{"OptimalNeyman"} or \code{"DaOptimal"}. The default is \code{"Neyman"}. See Details.}
+  \item{theta0}{A vector of length \code{k} used to smooth the success-rate estimates, \eqn{\hat p_k = (S_k + \theta_{0k})/(N_k + 1)}{p_k = (S_k + theta0_k)/(N_k + 1)}, where \eqn{S_k} and \eqn{N_k} are the number of successes and patients on treatment \eqn{k}. If \code{NULL} (default), all values are 0.5.}
+  \item{target.alloc}{Desired allocation proportion. One of \code{"Neyman"}, \code{"RSIHR"}, \code{"RPW"}, \code{"WeisUrn"}, \code{"OptimalNeyman"} or \code{"OptimalRSIHR"}. The default is \code{"RPW"}. See Details.}
   \item{r}{A non-negative number. The tuning parameter of Hu and Zhang's allocation function, used when \code{allocation = "DBCD"}. Values between 2 and 4 are common. The default value is 2.}
   \item{nsim}{A positive integer. The number of simulated trials, with a default value of 2000.}
+  \item{mRate}{A number between 0 and 1 giving the probability that a response is missing. Missingness is simulated completely at random (MCAR), and missing responses are excluded from estimation and testing. The default \code{NULL} means no missing responses. As in Zhai et al. (2024), missing responses are excluded from the estimates, the failure rate and the test, while the allocation proportions (both those used by the allocation function and the reported ones) count all enrolled patients.}
   \item{alpha}{A number between 0 and 1. The significance level of the two-sided test, with a default value of 0.05.}
   \item{allocation}{The allocation function. \code{"DBCD"} (default) uses the allocation function of Hu and Zhang (2004) with parameter \code{r}. \code{"ERADE"} uses the efficient randomized adaptive design of Hu, Zhang and He (2009), in its multi-arm version (Alkhnefr, Hu and Zhai, 2025), with parameter \code{erade.alpha}. See Details.}
   \item{erade.alpha}{A number between 0 and 1. The degree of randomization of ERADE, used when \code{allocation = "ERADE"}. Smaller values push the allocation more strongly towards the target, and values of 1/2 or 2/3 are recommended. The default is 0.5.}
-  \item{lower.bound}{A number between 0 and \eqn{1/k}. The smallest allowed target proportion of each arm for the targets \code{"ZR"} and \code{"OptimalNeyman"}. The default is 0.}
+  \item{lower.bound}{A number between 0 and \eqn{1/k}. The smallest allowed target proportion of each arm for the targets \code{"OptimalNeyman"} and \code{"OptimalRSIHR"}. The default is 0.}
   \item{monitor}{An optional object created by \code{\link{sqMonitor}} for group sequential monitoring of a two-arm trial. For each information time \code{t}, a look is taken after \code{ceiling(t * ssn)} patients, and the trial stops for efficacy as soon as the Wald statistic crosses the boundary of \code{\link{sqBoundary}}. The first look must come after the \code{n0} initial patients. Cannot be combined with \code{test.fun}. The default \code{NULL} gives a fixed sample design. See Details.}
   \item{test.fun}{An optional function \code{function(outcome, assignment)} that returns the p-value of a test for one simulated trial, where \code{outcome} holds the observed responses and \code{assignment} the treatment labels (integers 1 to \code{k}); missing responses are removed first. The null hypothesis is rejected when the p-value is at most \code{alpha}. The default \code{NULL} uses the built-in two-sided tests: the t-test for two arms and the Wald chi-squared test of equal means for more than two arms (for binary responses, if some arms have no variability, the variances are computed from \eqn{(S_k + 1)/(n_k + 2)}{(S_k + 1)/(n_k + 2)} as in Agresti and Caffo, 2000). Cannot be combined with \code{monitor}.}
-  \item{typeI}{Logical. If \code{TRUE}, the simulation is repeated under the null hypothesis, with the mean of every arm set to the average of the means in \code{theta} and the variance of each arm kept, and the rejection rate is reported as \code{type I error}. The default is \code{FALSE}.}
+  \item{typeI}{Logical. If \code{TRUE}, the simulation is repeated under the null hypothesis, with every arm's success rate set to the average of \code{p}, and the rejection rate is reported as \code{type I error}. The default is \code{FALSE}.}
   \item{seed}{An optional integer passed to \code{\link{set.seed}} before simulating, so that the results can be reproduced. The default \code{NULL} leaves the random number generator unchanged.}
 }
 \details{
@@ -37,22 +38,22 @@ The process begins by assigning \code{n0} patients to treatment groups using res
 
 This methodology was introduced by Hu and Zhang (2004) in their paper 'Asymptotic properties of doubly adaptive biased coin designs for multitreatment clinical trials'.
 
-Target allocations. \code{"Neyman"} is proportional to \eqn{\sigma_k}{sigma_k}. \code{"ZR"} is the allocation of Zhang and Rosenberger (2006), which minimizes the total expected response (smaller responses are better, and all means must be positive). For two arms it is their rule (7): \eqn{\rho_1 = \sigma_1\sqrt{\mu_2}/(\sigma_1\sqrt{\mu_2} + \sigma_2\sqrt{\mu_1})}{rho_1 = sigma_1 sqrt(mu_2)/(sigma_1 sqrt(mu_2) + sigma_2 sqrt(mu_1))} when this assigns more patients to the arm with the smaller mean, and 1/2 otherwise. For three or more arms it minimizes the total expected response for a fixed noncentrality parameter of the chi-squared test of equal means, with every proportion at least \code{lower.bound}, the continuous analogue of Tymofyeyev, Rosenberger and Hu (2007). \code{"OptimalNeyman"} minimizes the total sample size under the same constraints and equals \code{"Neyman"} for two arms with \code{lower.bound = 0}. For three or more arms a positive \code{lower.bound} such as 0.1 is recommended with \code{"ZR"} and \code{"OptimalNeyman"}. \code{"DaOptimal"} is proportional to \eqn{\sigma_k^{4/3}}{sigma_k^(4/3)}. While the target cannot be estimated (for example with fewer than two responses in an arm) equal allocation is used.
+Target allocations. With \eqn{q_k = 1 - p_k}, \code{"Neyman"} and \code{"RSIHR"} are proportional to \eqn{\sqrt{p_k q_k}}{sqrt(p_k q_k)} and \eqn{\sqrt{p_k}}{sqrt(p_k)}. For two arms these are the Neyman allocation and the optimal allocation of Rosenberger et al. (2001), and for more arms they are simple generalizations. \code{"RPW"} and \code{"WeisUrn"} are proportional to \eqn{1/q_k}, the limiting allocation of the randomized play-the-winner rule and of Wei's urn. \code{"OptimalNeyman"} and \code{"OptimalRSIHR"} are the k-arm optimal allocations of Tymofyeyev, Rosenberger and Hu (2007). They minimize the total sample size and the expected number of failures, respectively, for a fixed noncentrality parameter of the chi-squared test of equal success rates, with every proportion at least \code{lower.bound}. For two arms and \code{lower.bound = 0} they equal \code{"Neyman"} and \code{"RSIHR"}. For three or more arms the optimum without a lower bound can assign no patients to the middle arms, so a positive \code{lower.bound} such as 0.1 is recommended.
 
 Allocation functions. With \code{allocation = "ERADE"} and \eqn{\alpha} = \code{erade.alpha}, arm \eqn{k} receives the next patient (in group designs, each patient of the next group) with probability \eqn{\alpha\hat\rho_k}{alpha * rho_k} if it is over-allocated (\eqn{N_k/m > \hat\rho_k}{N_k/m > rho_k}), \eqn{\hat\rho_k}{rho_k} if it is on target, and \eqn{\hat\rho_k + (1-\alpha)\sum_{j \in S}\hat\rho_j/|T|}{rho_k + (1 - alpha) sum_{j in S} rho_j / |T|} if it is under-allocated, where \eqn{S} and \eqn{T} are the sets of over- and under-allocated arms, \eqn{N_k/m} is the current allocation proportion and \eqn{\hat\rho}{rho} is the estimated target (Alkhnefr, Hu and Zhai, 2025, eq. (1)). For two arms this is the ERADE of Hu, Zhang and He (2009). ERADE attains the lower bound of the asymptotic variance of the allocation proportions, so its allocation is less variable than that of the DBCD.
 
-Sequential monitoring. With \code{monitor = sqMonitor(t, spend)} (two arms only) the trial is analysed at the information times \code{t}. Looks are taken after \code{ceiling(t * ssn)} patients. At each look the Wald statistic \eqn{Z = (\hat\theta_1 - \hat\theta_2)/\sqrt{\hat v_1/n_1 + \hat v_2/n_2}}{Z = (theta_1 - theta_2)/sqrt(v_1/n_1 + v_2/n_2)} is computed from all patients enrolled so far, with the sample variances as variance estimates (missing responses are excluded), and the trial stops and rejects the null hypothesis as soon as \eqn{|Z|} reaches the boundary of \code{\link{sqBoundary}}. Zhu and Hu (2010) showed that under the DBCD the sequential statistics are asymptotically a Brownian motion in the information time, so alpha spending boundaries keep the type I error. Their theory covers two arms and the DBCD, and the same boundaries are used with ERADE. The result then also contains the stopping probability at each look and the expected sample size.
+Sequential monitoring. With \code{monitor = sqMonitor(t, spend)} (two arms only) the trial is analysed at the information times \code{t}. Looks are taken after \code{ceiling(t * ssn)} patients. At each look the Wald statistic \eqn{Z = (\hat\theta_1 - \hat\theta_2)/\sqrt{\hat v_1/n_1 + \hat v_2/n_2}}{Z = (theta_1 - theta_2)/sqrt(v_1/n_1 + v_2/n_2)} is computed from all patients enrolled so far, with \eqn{\hat p_k(1 - \hat p_k)}{p_k (1 - p_k)} as variance estimates (missing responses are excluded), and the trial stops and rejects the null hypothesis as soon as \eqn{|Z|} reaches the boundary of \code{\link{sqBoundary}}. Zhu and Hu (2010) showed that under the DBCD the sequential statistics are asymptotically a Brownian motion in the information time, so alpha spending boundaries keep the type I error. Their theory covers two arms and the DBCD, and the same boundaries are used with ERADE. The result then also contains the stopping probability at each look and the expected sample size.
 }
 \value{
 An object of class \code{"grouprar"}, a list that is printed as a short summary (see \code{\link{print.grouprar}}), with the following elements.
 \item{method}{The name of the procedure.}
 \item{sample size}{The total sample size.}
-\item{parameter}{The true means and variances used in the simulations, named \code{muA}, \code{sigma2A}, \code{muB}, ...}
+\item{parameter}{The true success rates used in the simulations, named \code{pA}, \code{pB}, ...}
 \item{propotion}{The mean allocation proportion of each arm over the simulations, named \code{treatment A}, \code{treatment B}, ...}
 \item{sd of propotion}{The standard deviation of the allocation proportion of each arm over the simulations.}
-\item{failure rate}{The mean response over the simulations (for continuous responses this element holds the mean response, not a failure rate).}
+\item{failure rate}{The mean failure rate over the simulations.}
 \item{sd of failure rate}{The standard deviation of the failure rate (or mean response) over the simulations.}
-\item{power}{The proportion of simulated trials that reject the null hypothesis of equal means. Simulations in which the test cannot be computed are dropped.}
+\item{power}{The proportion of simulated trials that reject the null hypothesis of equal success rates. Simulations in which the test cannot be computed are dropped.}
 \item{data: failureRate}{The failure rate (or mean response) of each simulated trial.}
 \item{data: test}{The test decision of each simulated trial (1 = reject).}
 \item{data: assignment}{The treatment assignments of the last simulated trial.}
@@ -65,7 +66,6 @@ An object of class \code{"grouprar"}, a list that is printed as a short summary 
 \item{data: stage}{Only if \code{monitor} is given. The look at which each simulated trial stopped.}
 \item{data: sample size}{Only if \code{monitor} is given. The number of patients enrolled in each simulated trial.}
 }
-
 \references{
 Alkhnefr, N., Hu, F. and Zhai, G. (2025). \emph{Efficient randomized adaptive designs for multi-arm clinical trials.} Statistical Methods in Medical Research, 34(9), 1886-1898. \doi{10.1177/09622802251362644}
 
@@ -73,40 +73,42 @@ Hu, F. and Zhang, L. X. (2004). \emph{Asymptotic properties of doubly adaptive b
 
 Hu, F., Zhang, L. X. and He, X. (2009). \emph{Efficient randomized-adaptive designs.} The Annals of Statistics, 37(5A), 2543-2560. \doi{10.1214/08-AOS655}
 
-Hu, F., Zhang, L. X., Cheung, S. H. and Chan, W. S. (2008). \emph{Doubly adaptive biased coin designs with delayed responses.} Canadian Journal of Statistics, 36(4), 541-559.
+Rosenberger, W. F., Stallard, N., Ivanova, A., Harper, C. N. and Ricks, M. L. (2001). \emph{Optimal adaptive designs for binary response trials.} Biometrics, 57(3), 909-913. \doi{10.1111/j.0006-341X.2001.00909.x}
 
 Tymofyeyev, Y., Rosenberger, W. F. and Hu, F. (2007). \emph{Implementing optimal allocation in sequential binary response experiments.} Journal of the American Statistical Association, 102(477), 224-234. \doi{10.1198/016214506000000906}
-
-Zhang, L. and Rosenberger, W. F. (2006). \emph{Response-adaptive randomization for clinical trials with continuous outcomes.} Biometrics, 62(2), 562-569. \doi{10.1111/j.1541-0420.2005.00496.x}
 
 Zhu, H. and Hu, F. (2010). \emph{Sequential monitoring of response-adaptive randomized clinical trials.} The Annals of Statistics, 38(4), 2218-2241. \doi{10.1214/10-AOS796}
 }
 
-\seealso{
- See \code{\link{DBCD_Bin}} for simulations of Hu and Zhang's doubly biased coin design with binary response.
-
- See \code{\link{dyldDBCD_Cont}} for simulations of Hu and Zhang's doubly biased coin design with delayed continuous response.
-}
 \examples{
-# A simple use
-## Arguments for generating the simulated data
-theta = c(13, 4.0^2, 15, 2.5^2)
-k = 2
-ssn = 88
-
-res <- DBCD_Cont(n0 = 20, theta = theta, k = k, ssn = ssn, theta0 = NULL,
-                 target.alloc = "Neyman", r = 2, nsim = 100, alpha = 0.05)
-
-# View the output (a list of all results)
+res <- DBCD_Bin(n0 = 20, p = c(0.7, 0.8), k = 2, ssn = 300, theta0 = NULL,
+                target.alloc = "RPW", r = 2, nsim = 50, mRate = NULL, alpha = 0.05)
 res
 
-## three arms with the k-arm ZR target and ERADE
-res3 <- DBCD_Cont(n0 = 30, theta = c(13, 16, 15, 6.25, 14, 9), k = 3, ssn = 150,
-                  target.alloc = "ZR", lower.bound = 0.1, nsim = 30,
-                  allocation = "ERADE", seed = 1)
-summary(res3)
+## ERADE instead of the DBCD allocation function
+res.erade <- DBCD_Bin(n0 = 20, p = c(0.7, 0.8), k = 2, ssn = 200, target.alloc = "RSIHR",
+                      nsim = 50, allocation = "ERADE", erade.alpha = 0.5, seed = 1)
+res.erade
+
+## three arms with the optimal RSIHR target of Tymofyeyev, Rosenberger and Hu (2007)
+res.opt <- DBCD_Bin(n0 = 30, p = c(0.5, 0.7, 0.8), k = 3, ssn = 200,
+                    target.alloc = "OptimalRSIHR", lower.bound = 0.1, nsim = 20, seed = 1)
+res.opt[["propotion"]]
+
+## group sequential monitoring with two interim looks (O'Brien-Fleming-type spending)
+res.sq <- DBCD_Bin(n0 = 20, p = c(0.6, 0.8), k = 2, ssn = 200, target.alloc = "RSIHR",
+                   nsim = 50, monitor = sqMonitor(c(1/3, 2/3)), seed = 1)
+res.sq[["stopping probability"]]
+res.sq[["expected sample size"]]
+
+## a user-supplied test: Fisher's exact test
+fisher <- function(outcome, assignment)
+  fisher.test(table(factor(assignment, 1:2), factor(outcome, 0:1)))$p.value
+res.f <- DBCD_Bin(n0 = 20, p = c(0.6, 0.8), k = 2, ssn = 100, nsim = 20,
+                  test.fun = fisher, seed = 1)
+res.f[["power"]]
 }
+
 \keyword{design}
 \concept{doubly adaptive biased coin design}
-\concept{doubly adaptive biased coin design with continuous response}
 \concept{response-adaptive randomization}

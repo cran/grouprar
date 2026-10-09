@@ -4,54 +4,66 @@
 Drop the loser rule
 }
 \description{
-Simulating drop the loser rule procedure with two-sided hypothesis testing in a clinical trial context.
+Simulating the drop-the-loser rule (number of arms \eqn{\ge 2}) with two-sided hypothesis testing in a clinical trial context.
 }
 \usage{
-DLRule(k, p, ssn, Y0 = NULL, nsim = 2000, alpha = 0.05)
+DLRule(k, p, ssn, Y0 = NULL, nsim = 2000, alpha = 0.05, test.fun = NULL,
+       typeI = FALSE, seed = NULL)
 }
 \arguments{
-  \item{k}{a positive integer. The value specifies the number of treatment groups involved in a clinical trial. (\eqn{k = 2})}
-  \item{p}{a positive vector of length equals to \code{k}. The values specify the true success rates for the various treatments, and these rates are used to generate data for simulations.}
-  \item{ssn}{a positive integer. The value specifies the total number of participants involved in each round of the simulation.}
-  \item{Y0}{A vector of length \code{k}, specifying the initial probability of allocating a patient to each group. For instance, if \code{Y0 = c(1, 1, 1)}, the initial probabilities are calculated as \code{Y0 / sum(Y0)}. When \code{Y0} is \code{NULL}, the initial urn will be set as If \code{Y0} is \code{NULL}, then \code{Y0} is set to a vector of length \code{k}, with all values equal to 1 by default.}
-  \item{nsim}{a positive integer. The value specifies the total number of simulations, with a default value of 2000.}
-  \item{alpha}{A number between 0 and 1. The value represents the predetermined level of significance that defines the probability threshold for rejecting the null hypothesis, with a default value of 0.05.}
+  \item{k}{A positive integer. The number of treatment groups in the trial (\eqn{k \ge 2}).}
+  \item{p}{A vector of length \code{k} with values between 0 and 1. The true success rates of the treatments, used to generate data for the simulations.}
+  \item{ssn}{A positive integer. The total number of participants in each simulated trial.}
+  \item{Y0}{A vector of length \code{k} giving the initial number of treatment balls of each type in the urn. One immigration ball is added automatically. For instance, if \code{Y0 = c(1, 1)}, the urn starts with one ball of each treatment and one immigration ball. If \code{Y0} is \code{NULL} (default), it is set to a vector of \code{k} ones.}
+  \item{nsim}{A positive integer. The number of simulated trials, with a default value of 2000.}
+  \item{alpha}{A number between 0 and 1. The significance level of the two-sided test, with a default value of 0.05.}
+  \item{test.fun}{An optional function \code{function(outcome, assignment)} that returns the p-value of a test for one simulated trial, where \code{outcome} holds the observed responses and \code{assignment} the treatment labels (integers 1 to \code{k}); missing responses are removed first. The null hypothesis is rejected when the p-value is at most \code{alpha}. The default \code{NULL} uses the built-in two-sided tests: the t-test for two arms and the Wald chi-squared test of equal means for more than two arms (for binary responses, if some arms have no variability, the variances are computed from \eqn{(S_k + 1)/(n_k + 2)}{(S_k + 1)/(n_k + 2)} as in Agresti and Caffo, 2000).}
+  \item{typeI}{Logical. If \code{TRUE}, the simulation is repeated under the null hypothesis, with every arm's success rate set to the average of \code{p}, and the rejection rate is reported as \code{type I error}. The default is \code{FALSE}.}
+  \item{seed}{An optional integer passed to \code{\link{set.seed}} before simulating, so that the results can be reproduced. The default \code{NULL} leaves the random number generator unchanged.}
 }
 \details{
-Drop the loser rule can be describe as follows: An urn contains three types of balls \eqn{(A, B, 0)} initially. Balls of types \eqn{A} and \eqn{B} represent treatments \eqn{A} and \eqn{B}, balls of 0 type are immigration balls. If \eqn{A} (or \eqn{B}) is drawn, then treatment \eqn{A} (or \eqn{B}) is assigned to the subject and the response is observed. If the observed response is a failure, then the ball is not replaced, else replaced. If an immigration ball (type 0) is drawn, no treatment is assigned, and the ball is returned to the urn together with one \eqn{A} and one \eqn{B} ball.
+The drop-the-loser rule can be described as follows. An urn initially contains balls of \eqn{K} treatment types and an immigration ball (type 0). A ball is drawn at random. If a treatment ball of type \eqn{k} is drawn, treatment \eqn{k} is assigned to the subject and the response is observed. If the response is a failure, the ball is not replaced, otherwise it is replaced. If the immigration ball is drawn, no treatment is assigned, and the ball is returned to the urn together with one ball of each treatment type. With two treatments \eqn{A} and \eqn{B} this is the rule of Ivanova (2003).
 }
 \value{
-\item{name}{The name of procedure.}
-\item{parameter}{The true parameters used to do the simulations.}
-\item{assignment}{The randomization sequence.}
-\item{propotion}{Average allocation porpotion for each of treatment groups.}
-\item{failRate}{The proportion of individuals who do not achieve the expected outcome in each simulation, on average.}
-\item{pwClac}{The probability of the study to detect a significant difference or effect if it truly exists.}
-\item{k}{Number of arms involved in the trial.}
+An object of class \code{"grouprar"}, a list that is printed as a short summary (see \code{\link{print.grouprar}}), with the following elements.
+\item{method}{The name of the procedure.}
+\item{sample size}{The total sample size.}
+\item{parameter}{The true success rates used in the simulations, named \code{pA}, \code{pB}, ...}
+\item{propotion}{The mean allocation proportion of each arm over the simulations, named \code{treatment A}, \code{treatment B}, ...}
+\item{sd of propotion}{The standard deviation of the allocation proportion of each arm over the simulations.}
+\item{failure rate}{The mean failure rate over the simulations.}
+\item{sd of failure rate}{The standard deviation of the failure rate (or mean response) over the simulations.}
+\item{power}{The proportion of simulated trials that reject the null hypothesis of equal success rates. Simulations in which the test cannot be computed are dropped.}
+\item{data: failureRate}{The failure rate (or mean response) of each simulated trial.}
+\item{data: test}{The test decision of each simulated trial (1 = reject).}
+\item{data: assignment}{The treatment assignments of the last simulated trial.}
+\item{data: propotion}{A data frame with the allocation proportions of each simulated trial.}
+\item{data: allocation}{An \code{nsim} by \code{ssn} matrix with the treatment assignments of every simulated trial.}
+\item{type I error}{Only if \code{typeI = TRUE}. The rejection rate under the null hypothesis.}
 }
 \references{
-Ivanova, A. (2003). \emph{A play-the-winner-type urn design with reduced variability.} Metrika, 58, 1-13.
+Ivanova, A. (2003). \emph{A play-the-winner-type urn design with reduced variability.} Metrika, 58, 1-13. \doi{10.1007/s001840200220}
 }
 
 \examples{
 ## a simple use
-dl.res = DLRule(k = 2, p = c(0.7, 0.8), ssn = 400, Y0 = NULL, nsim = 200, alpha = 0.05)
+dl.res <- DLRule(k = 2, p = c(0.7, 0.8), ssn = 200, Y0 = NULL, nsim = 100, alpha = 0.05)
 
 ## view the output
 dl.res
 \donttest{
 
   ## view all simulation settings
-  dl.res$name
-  dl.res$parameter
-  dl.res$k
+  dl.res[["method"]]
+  dl.res[["parameter"]]
 
-  ## View the simulations results
-  dl.res$propotion
-  dl.res$failRate
-  dl.res$pwCalc
-  dl.res$assignment
+  ## view the simulation results
+  dl.res[["propotion"]]
+  dl.res[["failure rate"]]
+  dl.res[["power"]]
+  dl.res[["data: assignment"]]
   }
 }
-\keyword{DLRlue}
-\keyword{Drop the loser rule}
+\keyword{design}
+\concept{drop-the-loser rule}
+\concept{response-adaptive randomization}
